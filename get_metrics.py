@@ -29,9 +29,11 @@ def get_challenge(target_ip):
     return get_json_value(data, "challenge")
 
 def gen_passwd(password, challenge):
+    # Create a sha256 sum of the password+challenge
     return hashlib.sha256(password.encode() + challenge.encode()).hexdigest()
 
 def login(target_ip, hashed_pw):
+    # Send a post request to the Login.json which contains the hashed_pw and the static csrf token
     r = requests.post("http://{}/data/Login.json?lang=de".format(target_ip), data={'password': hashed_pw, 'showpw': 0, 'csrf_token': init_csrf})
     if get_json_value(r.json(), "login") == "success":
         print ("login success")
@@ -67,6 +69,9 @@ cookie_jar = login(sys.argv[1], hashpw)
 
 if cookie_jar == None:
     sys.exit(1)
+
+# The pages in the engineer mode don't need a csrf_token, other requests do however need it.
+# A valid token can be extracted from the index.html
 dsl_info = requests.get("http://{}/html/engineer/ro_dsl.htm".format(sys.argv[1]), cookies=cookie_jar)
 ds, st = parse_dsl_info(dsl_info.text)
 
